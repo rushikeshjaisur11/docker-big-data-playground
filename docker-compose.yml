@@ -131,11 +131,11 @@ services:
     volumes:
       - ./postgres/init-hive-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
       - postgres-db-volume:/var/lib/postgresql/data
-    # healthcheck:
-    #   test: [ "CMD", "pg_isready", "-U", "airflow" ]
-    #   interval: 5s
-    #   retries: 5
-    # restart: always
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "airflow" ]
+      interval: 5s
+      retries: 5
+    restart: always
 
   # airflow-scheduler:
   #   <<: *airflow-common
@@ -306,83 +306,83 @@ services:
   #     airflow-init:
   #       condition: service_completed_successfully
 
-  # hue:
-  #   image: bde2020/hdfs-filebrowser:3.11
-  #   ports:
-  #     - 8088:8088
-  #   environment:
-  #     - NAMENODE_HOST=namenode
-  # spark-master:
-  #   image: bde2020/spark-master:3.2.1-hadoop3.2
-  #   container_name: spark-master
-  #   ports:
-  #     - 8080:8080
-  #     - 7077:7077
-  #   env_file:
-  #     - ./hadoop/hadoop.env
-  # spark-worker:
-  #   image: bde2020/spark-worker:3.2.1-hadoop3.2
-  #   depends_on:
-  #     - spark-master
-  #   environment:
-  #     - SPARK_MASTER=spark://spark-master:7077
-  #   ports:
-  #     - 8081:8081
-  #   env_file:
-  #     - ./hadoop/hadoop.env
-  hive-server:
-    image: bde2020/hive:2.3.2-postgresql-metastore
+  hue:
+    image: bde2020/hdfs-filebrowser:3.11
+    ports:
+      - 8088:8088
+    environment:
+      - NAMENODE_HOST=namenode
+  spark-master:
+    image: bde2020/spark-master:3.2.1-hadoop3.2
+    container_name: spark-master
+    ports:
+      - 8080:8080
+      - 7077:7077
     env_file:
       - ./hadoop/hadoop.env
+  spark-worker:
+    image: bde2020/spark-worker:3.2.1-hadoop3.2
+    depends_on:
+      - spark-master
     environment:
-      HIVE_CORE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://hive-metastore/metastore"
-      SERVICE_PRECONDITION: "hive-metastore:9083"
+      - SPARK_MASTER=spark://spark-master:7077
     ports:
-      - "10000:10000"
-  hive-metastore:
-    image: bde2020/hive:2.3.2-postgresql-metastore
+      - 8081:8081
     env_file:
       - ./hadoop/hadoop.env
-    command: /opt/hive/bin/hive --service metastore
+  # hive-server:
+  #   image: bde2020/hive:2.3.2-postgresql-metastore
+  #   env_file:
+  #     - ./hadoop/hadoop.env
+  #   environment:
+  #     HIVE_CORE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://hive-metastore/metastore"
+  #     SERVICE_PRECONDITION: "hive-metastore:9083"
+  #   ports:
+  #     - "10000:10000"
+  # hive-metastore:
+  #   image: bde2020/hive:2.3.2-postgresql-metastore
+  #   env_file:
+  #     - ./hadoop/hadoop.env
+  #   command: /opt/hive/bin/hive --service metastore
+  #   environment:
+  #     SERVICE_PRECONDITION: "namenode:9870 datanode:9864 hive-metastore-postgresql:5432"
+  #   ports:
+  #     - "9083:9083"
+  #   volumes:
+  #     - ./hive/conf:/hive/conf
+  # presto-coordinator:
+  #   image: shawnzhu/prestodb:latest
+  #   ports:
+  #     - "8080:8080"
+  zoo:
+    image: zookeeper:3.4.10
+    container_name: zoo
     environment:
-      SERVICE_PRECONDITION: "namenode:9870 datanode:9864 hive-metastore-postgresql:5432"
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=0.0.0.0:2888:3888
     ports:
-      - "9083:9083"
-  # hive-metastore-postgresql:
-  #   image: bde2020/hive-metastore-postgresql:2.3.0
-  presto-coordinator:
-    image: shawnzhu/prestodb:latest
+      - 2181:2181
+  hbase-master:
+    image: bde2020/hbase-master:1.0.0-hbase1.2.6
+    container_name: hbase-master
+    hostname: hbase-master
+    env_file:
+      - ./hbase-distributed-local.env
+    environment:
+      SERVICE_PRECONDITION: "namenode:50070 datanode:50075 zoo:2181"
     ports:
-      - "8080:8080"
-  # zoo:
-  #   image: zookeeper:3.4.10
-  #   container_name: zoo
-  #   environment:
-  #     ZOO_MY_ID: 1
-  #     ZOO_SERVERS: server.1=0.0.0.0:2888:3888
-  #   ports:
-  #     - 2181:2181
-  # hbase-master:
-  #   image: bde2020/hbase-master:1.0.0-hbase1.2.6
-  #   container_name: hbase-master
-  #   hostname: hbase-master
-  #   env_file:
-  #     - ./hbase-distributed-local.env
-  #   environment:
-  #     SERVICE_PRECONDITION: "namenode:50070 datanode:50075 zoo:2181"
-  #   ports:
-  #     - 16010:16010
-  # hbase-region:
-  #   image: bde2020/hbase-regionserver:1.0.0-hbase1.2.6
-  #   container_name: hbase-regionserver
-  #   hostname: hbase-regionserver
-  #   env_file:
-  #     - ./hbase-distributed-local.env
-  #   environment:
-  #     HBASE_CONF_hbase_regionserver_hostname: hbase-region
-  #     SERVICE_PRECONDITION: "namenode:50070 datanode:50075 zoo:2181 hbase-master:16010"
-  #   ports:
-  #     - 16030:16030
+      - 16010:16010
+  hbase-region:
+    image: bde2020/hbase-regionserver:1.0.0-hbase1.2.6
+    container_name: hbase-regionserver
+    hostname: hbase-regionserver
+    env_file:
+      - ./hbase-distributed-local.env
+    environment:
+      HBASE_CONF_hbase_regionserver_hostname: hbase-region
+      SERVICE_PRECONDITION: "namenode:50070 datanode:50075 zoo:2181 hbase-master:16010"
+    ports:
+      - 16030:16030
 
 volumes:
   hadoop_namenode:
