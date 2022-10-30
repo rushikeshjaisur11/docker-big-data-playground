@@ -1,34 +1,34 @@
 version: "3"
-x-airflow-common:
-  # In order to add custom dependencies or upgrade provider packages you can use your extended image.
-  # Comment the image line, place your Dockerfile in the directory where you placed the docker-compose.yaml
-  # and uncomment the "build" line below, Then run `docker-compose build` to build the images.
-  &airflow-common
-  image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:2.4.1}
-  # build: .
-  environment:
-    &airflow-common-env
-    AIRFLOW__CORE__EXECUTOR: CeleryExecutor
-    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
-    # For backward compatibility, with Airflow <2.3
-    AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
-    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres/airflow
-    AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
-    AIRFLOW__CORE__FERNET_KEY: ''
-    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
-    AIRFLOW__CORE__LOAD_EXAMPLES: 'true'
-    AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth'
-    _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
-  volumes:
-    - ./airflow/:/opt/airflow/
+# x-airflow-common:
+#   # In order to add custom dependencies or upgrade provider packages you can use your extended image.
+#   # Comment the image line, place your Dockerfile in the directory where you placed the docker-compose.yaml
+#   # and uncomment the "build" line below, Then run `docker-compose build` to build the images.
+#   &airflow-common
+#   image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:2.4.1}
+#   # build: .
+#   environment:
+#     &airflow-common-env
+#     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+#     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+#     # For backward compatibility, with Airflow <2.3
+#     AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+#     AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres/airflow
+#     AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
+#     AIRFLOW__CORE__FERNET_KEY: ''
+#     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+#     AIRFLOW__CORE__LOAD_EXAMPLES: 'true'
+#     AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth'
+#     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
+#   volumes:
+#     - ./airflow/:/opt/airflow/
 
-  user: "${AIRFLOW_UID:-50000}:0"
-  depends_on:
-    &airflow-common-depends-on
-    redis:
-      condition: service_healthy
-    postgres:
-      condition: service_healthy
+#   user: "${AIRFLOW_UID:-50000}:0"
+#   depends_on:
+#     &airflow-common-depends-on
+#     redis:
+#       condition: service_healthy
+#     postgres:
+#       condition: service_healthy
 
 services:
   namenode:
@@ -86,16 +86,16 @@ services:
       - hadoop_historyserver:/hadoop/yarn/timeline
     env_file:
       - ./hadoop/hadoop.env
-  redis:
-    image: redis:latest
-    expose:
-      - 6379
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 5s
-      timeout: 30s
-      retries: 50
-    restart: always
+  # redis:
+  #   image: redis:latest
+  #   expose:
+  #     - 6379
+  #   healthcheck:
+  #     test: [ "CMD", "redis-cli", "ping" ]
+  #     interval: 5s
+  #     timeout: 30s
+  #     retries: 50
+  #   restart: always
 
   # airflow-webserver:
   #   <<: *airflow-common
@@ -120,9 +120,10 @@ services:
   #       condition: service_completed_successfully
 
   postgres:
-    build:
-      context: postgres
-      dockerfile: postgres.Dockerfile
+    # image: postgres:latest
+    build: 
+      context: ./postgres
+      dockerfile: Dockerfile
     container_name: postgres
     environment:
       POSTGRES_USER: airflow
@@ -306,83 +307,91 @@ services:
   #     airflow-init:
   #       condition: service_completed_successfully
 
-  hue:
-    image: bde2020/hdfs-filebrowser:3.11
-    ports:
-      - 8088:8088
-    environment:
-      - NAMENODE_HOST=namenode
-  spark-master:
-    image: bde2020/spark-master:3.2.1-hadoop3.2
-    container_name: spark-master
-    ports:
-      - 8080:8080
-      - 7077:7077
+  # hue:
+  #   image: bde2020/hdfs-filebrowser:3.11
+  #   ports:
+  #     - 8088:8088
+  #   environment:
+  #     - NAMENODE_HOST=namenode
+  # spark-master:
+  #   image: bde2020/spark-master:3.2.1-hadoop3.2
+  #   container_name: spark-master
+  #   ports:
+  #     - 8080:8080
+  #     - 7077:7077
+  #   env_file:
+  #     - ./hadoop/hadoop.env
+  # spark-worker:
+  #   image: bde2020/spark-worker:3.2.1-hadoop3.2
+  #   depends_on:
+  #     - spark-master
+  #   environment:
+  #     - SPARK_MASTER=spark://spark-master:7077
+  #   ports:
+  #     - 8081:8081
+  #   env_file:
+  #     - ./hadoop/hadoop.env
+
+  hive-server:
+    # image: bde2020/hive:2.3.2-postgresql-metastore
+    build:
+      context: ./hive
+      dockerfile: Dockerfile
+    container_name: hive-server
     env_file:
       - ./hadoop/hadoop.env
-  spark-worker:
-    image: bde2020/spark-worker:3.2.1-hadoop3.2
+    environment:
+      HIVE_CORE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://hive-metastore/metastore"
+      SERVICE_PRECONDITION: "hive-metastore:9083"
+    ports:
+      - "10000:10000"
+  hive-metastore:
+    # image: bde2020/hive:2.3.2-postgresql-metastore
+    build:
+      context: hive
+      dockerfile: Dockerfile
+    env_file:
+      - ./hadoop/hadoop.env
+    command: /opt/hive/bin/hive --service metastore
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870 datanode:9864 postgres:5432"
+    ports:
+      - "9083:9083"
     depends_on:
-      - spark-master
-    environment:
-      - SPARK_MASTER=spark://spark-master:7077
-    ports:
-      - 8081:8081
-    env_file:
-      - ./hadoop/hadoop.env
-  # hive-server:
-  #   image: bde2020/hive:2.3.2-postgresql-metastore
-  #   env_file:
-  #     - ./hadoop/hadoop.env
-  #   environment:
-  #     HIVE_CORE_CONF_javax_jdo_option_ConnectionURL: "jdbc:postgresql://hive-metastore/metastore"
-  #     SERVICE_PRECONDITION: "hive-metastore:9083"
-  #   ports:
-  #     - "10000:10000"
-  # hive-metastore:
-  #   image: bde2020/hive:2.3.2-postgresql-metastore
-  #   env_file:
-  #     - ./hadoop/hadoop.env
-  #   command: /opt/hive/bin/hive --service metastore
-  #   environment:
-  #     SERVICE_PRECONDITION: "namenode:9870 datanode:9864 hive-metastore-postgresql:5432"
-  #   ports:
-  #     - "9083:9083"
-  #   volumes:
-  #     - ./hive/conf:/hive/conf
+      - postgres
   # presto-coordinator:
   #   image: shawnzhu/prestodb:latest
   #   ports:
   #     - "8080:8080"
-  zoo:
-    image: zookeeper:3.4.10
-    container_name: zoo
-    environment:
-      ZOO_MY_ID: 1
-      ZOO_SERVERS: server.1=0.0.0.0:2888:3888
-    ports:
-      - 2181:2181
-  hbase-master:
-    image: bde2020/hbase-master:1.0.0-hbase1.2.6
-    container_name: hbase-master
-    hostname: hbase-master
-    env_file:
-      - ./hbase-distributed-local.env
-    environment:
-      SERVICE_PRECONDITION: "namenode:50070 datanode:50075 zoo:2181"
-    ports:
-      - 16010:16010
-  hbase-region:
-    image: bde2020/hbase-regionserver:1.0.0-hbase1.2.6
-    container_name: hbase-regionserver
-    hostname: hbase-regionserver
-    env_file:
-      - ./hbase-distributed-local.env
-    environment:
-      HBASE_CONF_hbase_regionserver_hostname: hbase-region
-      SERVICE_PRECONDITION: "namenode:50070 datanode:50075 zoo:2181 hbase-master:16010"
-    ports:
-      - 16030:16030
+  # zoo:
+  #   image: zookeeper:3.4.10
+  #   container_name: zoo
+  #   environment:
+  #     ZOO_MY_ID: 1
+  #     ZOO_SERVERS: server.1=0.0.0.0:2888:3888
+  #   ports:
+  #     - 2181:2181
+  # hbase-master:
+  #   image: bde2020/hbase-master:1.0.0-hbase1.2.6
+  #   container_name: hbase-master
+  #   hostname: hbase-master
+  #   env_file:
+  #     - ./hbase-distributed-local.env
+  #   environment:
+  #     SERVICE_PRECONDITION: "namenode:50070 datanode:50075 zoo:2181"
+  #   ports:
+  #     - 16010:16010
+  # hbase-region:
+  #   image: bde2020/hbase-regionserver:1.0.0-hbase1.2.6
+  #   container_name: hbase-regionserver
+  #   hostname: hbase-regionserver
+  #   env_file:
+  #     - ./hbase-distributed-local.env
+  #   environment:
+  #     HBASE_CONF_hbase_regionserver_hostname: hbase-region
+  #     SERVICE_PRECONDITION: "namenode:50070 datanode:50075 zoo:2181 hbase-master:16010"
+  #   ports:
+  #     - 16030:16030
 
 volumes:
   hadoop_namenode:
