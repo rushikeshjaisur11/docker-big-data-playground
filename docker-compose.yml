@@ -121,7 +121,7 @@ services:
 
   postgres:
     # image: postgres:latest
-    build: 
+    build:
       context: ./postgres
       dockerfile: Dockerfile
     container_name: postgres
@@ -313,25 +313,48 @@ services:
   #     - 8088:8088
   #   environment:
   #     - NAMENODE_HOST=namenode
-  # spark-master:
-  #   image: bde2020/spark-master:3.2.1-hadoop3.2
-  #   container_name: spark-master
-  #   ports:
-  #     - 8080:8080
-  #     - 7077:7077
-  #   env_file:
-  #     - ./hadoop/hadoop.env
-  # spark-worker:
-  #   image: bde2020/spark-worker:3.2.1-hadoop3.2
-  #   depends_on:
-  #     - spark-master
-  #   environment:
-  #     - SPARK_MASTER=spark://spark-master:7077
-  #   ports:
-  #     - 8081:8081
-  #   env_file:
-  #     - ./hadoop/hadoop.env
-
+  spark-master:
+    image: bde2020/spark-master:3.2.1-hadoop3.2
+    container_name: spark-master
+    ports:
+      - 8080:8080
+      - 7077:7077
+    env_file:
+      - ./hadoop/hadoop.env
+    volumes:
+      - ./spark/app:/app
+  spark-worker-a:
+    image: bde2020/spark-worker:3.2.1-hadoop3.2
+    depends_on:
+      - spark-master
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_WORKER_CORES=1
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_DRIVER_MEMORY=1G
+      - SPARK_EXECUTOR_MEMORY=1G
+      - SPARK_WORKLOAD=worker
+      - SPARK_LOCAL_IP=spark-worker-a
+    ports:
+      - 8081:7000
+    env_file:
+      - ./hadoop/hadoop.env
+  spark-worker-b:
+    image: bde2020/spark-worker:3.2.1-hadoop3.2
+    depends_on:
+      - spark-master
+    environment:
+      - SPARK_MASTER=spark://spark-master:7077
+      - SPARK_WORKER_CORES=1
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_DRIVER_MEMORY=1G
+      - SPARK_EXECUTOR_MEMORY=1G
+      - SPARK_WORKLOAD=worker
+      - SPARK_LOCAL_IP=spark-worker-b
+    ports:
+      - 8082:7000
+    env_file:
+      - ./hadoop/hadoop.env
   hive-server:
     # image: bde2020/hive:2.3.2-postgresql-metastore
     build:
@@ -359,10 +382,6 @@ services:
       - "9083:9083"
     depends_on:
       - postgres
-  # presto-coordinator:
-  #   image: shawnzhu/prestodb:latest
-  #   ports:
-  #     - "8080:8080"
   # zoo:
   #   image: zookeeper:3.4.10
   #   container_name: zoo
