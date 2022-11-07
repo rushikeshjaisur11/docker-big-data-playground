@@ -1,0 +1,13 @@
+version: "3"
+services:
+  zeppelin:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+
+    environment:
+      - SPARK_HOME=./spark-3.2.1-bin-hadoop3.2
+      - ZEPPELIN_LOG_DIR=./logs
+      - ZEPPELIN_NOTEBOOK_DIR=./notebook
+    ports:
+      - 9080:8080
