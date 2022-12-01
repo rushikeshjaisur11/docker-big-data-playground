@@ -59,7 +59,7 @@ services:
       - 9864:9864
   datanode2:
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
-    container_name: datanode
+    container_name: datanode2
     restart: always
     volumes:
       - hadoop_datanode:/hadoop/dfs/data
@@ -71,7 +71,7 @@ services:
       - 9865:9864
   datanode3:
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
-    container_name: datanode
+    container_name: datanode3
     restart: always
     volumes:
       - hadoop_datanode:/hadoop/dfs/data
