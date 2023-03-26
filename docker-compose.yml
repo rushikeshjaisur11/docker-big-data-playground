@@ -68,26 +68,14 @@ services:
     env_file:
       - ./hadoop/hadoop.env
     ports:
-      - 9865:9864
-  datanode3:
-    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
-    container_name: datanode3
-    restart: always
-    volumes:
-      - hadoop_datanode:/hadoop/dfs/data3
-    environment:
-      SERVICE_PRECONDITION: "namenode:9870"
-    env_file:
-      - ./hadoop/hadoop.env
-    ports:
       - 9866:9864
   edgenode:
-    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    build:
+      context: ./edgenode
+      dockerfile: Dockerfile
     container_name: edgenode
     volumes:
       - ./data:/data
-    environment:
-      SERVICE_PRECONDITION: "namenode:9870"
     env_file:
       - ./hadoop/hadoop.env
 
@@ -174,7 +162,6 @@ services:
       test: [ "CMD", "pg_isready", "-U", "airflow" ]
       interval: 5s
       retries: 5
-    restart: always
 
   airflow-scheduler:
     <<: *airflow-common
@@ -377,22 +364,6 @@ services:
       - 8081:8080
     env_file:
       - ./hadoop/hadoop.env
-  spark-worker-b:
-    image: bde2020/spark-worker:3.2.1-hadoop3.2
-    depends_on:
-      - spark-master
-    environment:
-      - SPARK_MASTER=spark://spark-master:7077
-      - SPARK_WORKER_CORES=3
-      - SPARK_WORKER_MEMORY=1G
-      - SPARK_DRIVER_MEMORY=1G
-      - SPARK_EXECUTOR_MEMORY=1G
-      - SPARK_WORKLOAD=worker
-      - SPARK_LOCAL_IP=spark-worker-b
-    ports:
-      - 8082:8080
-    env_file:
-      - ./hadoop/hadoop.env
   hive-server:
     # image: bde2020/hive:2.3.2-postgresql-metastore
     build:
@@ -420,54 +391,55 @@ services:
       - "9083:9083"
     depends_on:
       - postgres
-  zeppelin:
-    build:
-      context: ./zeppelin
-      dockerfile: Dockerfile
-    env_file:
-      - ./hadoop/hadoop.env
-    environment:
-      - SPARK_HOME=./spark-3.2.1-bin-hadoop3.2
-      - ZEPPELIN_LOG_DIR=./logs
-      - ZEPPELIN_NOTEBOOK_DIR=./notebook
-    ports:
-      - 9080:8080
+  # zeppelin:
+  #   build:
+  #     context: ./zeppelin
+  #     dockerfile: Dockerfile
+  #   env_file:
+  #     - ./hadoop/hadoop.env
+  #   environment:
+  #     - SPARK_HOME=./spark-3.2.1-bin-hadoop3.2
+  #     - ZEPPELIN_LOG_DIR=./logs
+  #     - ZEPPELIN_NOTEBOOK_DIR=./notebook
+  #   ports:
+  #     - 9080:8080
 
-    volumes:
-      - ./zeppelin/logs:/opt/zeppelin/logs
-      - ./zeppelin/notebooks:/opt/zeppelin/notebook
-  # zoo:
-  #   image: zookeeper:3.4.10
-  #   container_name: zoo
-  #   environment:
-  #     ZOO_MY_ID: 1
-  #     ZOO_SERVERS: server.1=0.0.0.0:2888:3888
-  #   ports:
-  #     - 2181:2181
-  # hbase-master:
-  #   image: bde2020/hbase-master:1.0.0-hbase1.2.6
-  #   container_name: hbase-master
-  #   hostname: hbase-master
-  #   env_file:
-  #     - ./hbase-distributed-local.env
-  #   environment:
-  #     SERVICE_PRECONDITION: "namenode:50070 datanode:50075 zoo:2181"
-  #   ports:
-  #     - 16010:16010
-  # hbase-region:
-  #   image: bde2020/hbase-regionserver:1.0.0-hbase1.2.6
-  #   container_name: hbase-regionserver
-  #   hostname: hbase-regionserver
-  #   env_file:
-  #     - ./hbase-distributed-local.env
-  #   environment:
-  #     HBASE_CONF_hbase_regionserver_hostname: hbase-region
-  #     SERVICE_PRECONDITION: "namenode:50070 datanode:50075 zoo:2181 hbase-master:16010"
-  #   ports:
-  #     - 16030:16030
+  #   volumes:
+  #     - ./zeppelin/logs:/opt/zeppelin/logs
+  #     - ./zeppelin/notebooks:/opt/zeppelin/notebook
+  zoo:
+    image: zookeeper:3.4.10
+    container_name: zoo
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=0.0.0.0:2888:3888
+    ports:
+      - 2181:2181
+  hbase-master:
+    image: bde2020/hbase-master:1.0.0-hbase1.2.6
+    container_name: hbase-master
+    hostname: hbase-master
+    env_file:
+      - ./hbase-distributed-local.env
+    environment:
+      SERVICE_PRECONDITION: "namenode:50070 datanode:50075 zoo:2181"
+    ports:
+      - 16010:16010
+  hbase-region:
+    image: bde2020/hbase-regionserver:1.0.0-hbase1.2.6
+    container_name: hbase-regionserver
+    hostname: hbase-regionserver
+    env_file:
+      - ./hbase-distributed-local.env
+    environment:
+      HBASE_CONF_hbase_regionserver_hostname: hbase-region
+      SERVICE_PRECONDITION: "namenode:50070 datanode:50075 zoo:2181 hbase-master:16010"
+    ports:
+      - 16030:16030
 
 volumes:
   hadoop_namenode:
   hadoop_datanode:
   hadoop_historyserver:
   postgres-db-volume:
+  mysql-volume:
