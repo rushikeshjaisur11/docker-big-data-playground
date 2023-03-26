@@ -14,6 +14,7 @@ RUN wget https://archive.apache.org/dist/spark/spark-3.2.1/spark-3.2.1-bin-hadoo
 # RUN mv spark-3.2.1-bin-hadoop3.2 ../spark
 ENV SPARK_HOME=./spark-3.2.1-bin-hadoop3.2
 RUN rm spark-3.2.1-bin-hadoop3.2.tgz
-RUN apt remove wget 
+RUN export PATH=$PATH:$SPARK_HOME/bin
+RUN echo "y" |  apt remove wget 
 EXPOSE 22
 CMD ["/usr/sbin/sshd","-D"]

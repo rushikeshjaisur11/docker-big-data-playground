@@ -1,1 +1,6 @@
 zeppelin/notebooks
+airflow/airflow-worker.pid
+airflow/logs
+airflow/airflow-webserver.pid
+airflow/airflow-worker.pid
+airflow/dags/__pycache__/
