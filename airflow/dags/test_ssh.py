@@ -14,3 +14,10 @@ task2 = SSHOperator(task_id="spark_version",
                     ssh_conn_id="edgenode",
                     command="pyspark --verison",
                     dag=dag)
+
+task3 = SSHOperator(task_id="hadoop_dirs",
+                    ssh_conn_id="edgenode",
+                    command="hadoop fs -ls /",
+                    dag=dag)
+task1 >> task2
+task3
