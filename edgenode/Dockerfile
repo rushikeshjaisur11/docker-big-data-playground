@@ -26,9 +26,6 @@ RUN rm spark-3.2.1-bin-hadoop3.2.tgz
 ENV PATH=$PATH:./spark-3.2.1-bin-hadoop3.2/bin/
 ENV PATH=$PATH:./miniconda3/bin/
 RUN echo "y" |  apt remove wget 
-USER rushi
-ENV PATH=$PATH:./spark-3.2.1-bin-hadoop3.2/bin/
-ENV PATH=$PATH:./miniconda3/bin/
 COPY entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["entrypoint.sh"]
