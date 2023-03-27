@@ -2,7 +2,8 @@ from airflow import DAG
 from airflow.contrib.operators.ssh_operator import SSHOperator
 import datetime
 
-dag = DAG(dag_id="edgeNodeDAG", start_date=datetime.datetime.now())
+dag = DAG(dag_id="edgeNodeDAG", start_date=datetime.datetime.now(),
+          schedule_interval = None)
 
 task1 = SSHOperator(
     task_id="echo_task",
