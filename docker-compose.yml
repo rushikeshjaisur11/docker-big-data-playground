@@ -78,6 +78,8 @@ services:
       - ./data:/data
     env_file:
       - ./hadoop/hadoop.env
+    ports:
+      - 2022:22
 
   resourcemanager:
     image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
