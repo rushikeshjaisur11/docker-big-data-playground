@@ -12,5 +12,5 @@ task1 = SSHOperator(
 )
 task2 = SSHOperator(task_id="spark_version",
                     ssh_conn_id="edgenode",
-                    command="./$SPARK_HOME/bin/pyspark --verison",
+                    command="pyspark --verison",
                     dag=dag)
