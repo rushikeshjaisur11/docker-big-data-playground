@@ -29,5 +29,9 @@ RUN echo "y" |  apt remove wget
 USER rushi
 ENV PATH=$PATH:./spark-3.2.1-bin-hadoop3.2/bin/
 ENV PATH=$PATH:./miniconda3/bin/
+USER root
+COPY entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["entrypoint.sh"]
 EXPOSE 22
 CMD ["/usr/sbin/sshd","-D"]
