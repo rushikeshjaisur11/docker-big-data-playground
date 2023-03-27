@@ -9,11 +9,8 @@ RUN wget \
     && echo PATH="/root/miniconda3/bin":$PATH >> .bashrc \
     && exec bash \
     && conda --version
-RUN cp -r /root/miniconda3 /miniconda3
-RUN groupadd sshgroup && useradd -ms /bin/bash -g sshgroup rushi
-RUN mkdir -p /home/sshuser/.ssh
-RUN echo 'Rushi@123\nRushi@123' | sudo passwd rushi 
-RUN sudo usermod -aG sudo rushi
+COPY profile /etc/profile
+RUN mv /root/miniconda3 /miniconda3
 # Start SSH service
 RUN service ssh start
 # Expose docker port 22
@@ -23,11 +20,16 @@ RUN wget https://archive.apache.org/dist/spark/spark-3.2.1/spark-3.2.1-bin-hadoo
 # RUN mv spark-3.2.1-bin-hadoop3.2 ../spark
 ENV SPARK_HOME=./spark-3.2.1-bin-hadoop3.2
 RUN rm spark-3.2.1-bin-hadoop3.2.tgz
-ENV PATH=$PATH:./spark-3.2.1-bin-hadoop3.2/bin/
-ENV PATH=$PATH:./miniconda3/bin/
+ENV PATH=/opt/hadoop-3.2.1/bin/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:./spark-3.2.1-bin-hadoop3.2/bin/:./miniconda3/bin/:./spark-3.2.1-bin-hadoop3.2/bin/:./miniconda3/bin/
 RUN echo "y" |  apt remove wget 
 COPY entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/entrypoint.sh
 ENTRYPOINT ["entrypoint.sh"]
 EXPOSE 22
 CMD ["/usr/sbin/sshd","-D"]
+
+RUN groupadd -r bigdata && useradd -ms /bin/bash -r -g bigdata rushi
+RUN mkdir -p /home/rushi/.ssh
+RUN echo 'Rushi@123\nRushi@123' | sudo passwd rushi 
+RUN sudo usermod -aG sudo rushi
+RUN echo "export PATH=$PATH" > /etc/environment
