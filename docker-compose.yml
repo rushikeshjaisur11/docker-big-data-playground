@@ -168,7 +168,7 @@ services:
     env_file:
       - ./hadoop/hadoop.env
     volumes:
-      - ./spark/app:/app
+      - ./spark/conf:/spark/conf/
   spark-worker-a:
     image: bde2020/spark-worker:3.2.1-hadoop3.2
     depends_on:
@@ -185,6 +185,8 @@ services:
       - 8081:8080
     env_file:
       - ./hadoop/hadoop.env
+    volumes:
+      - ./spark/conf:/spark/conf/
   hive-server:
     # image: bde2020/hive:2.3.2-postgresql-metastore
     build:

@@ -2,9 +2,9 @@
 # and Bourne compatible shells (bash(1), ksh(1), ash(1), ...).
 
 if [ "`id -u`" -eq 0 ]; then
-  PATH="/opt/hadoop-3.2.1/bin/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/spark-3.2.1-bin-hadoop3.2/bin/:/miniconda3/bin/:/spark-3.2.1-bin-hadoop3.2/bin/:/miniconda3/bin/:/usr/lib/jvm/java-8-openjdk-amd64/bin"
+  PATH=$PATH:"/opt/hadoop-3.2.1/bin/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/anaconda3/bin/:/anaconda3/bin/:/usr/lib/jvm/java-8-openjdk-amd64/bin/"
 else
-  PATH="/opt/hadoop-3.2.1/bin/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/spark-3.2.1-bin-hadoop3.2/bin/:/miniconda3/bin/:/spark-3.2.1-bin-hadoop3.2/bin/:/miniconda3/bin/:/usr/lib/jvm/java-8-openjdk-amd64/bin"
+  PATH=$PATH:"/opt/hadoop-3.2.1/bin/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/anaconda3/bin/:/anaconda3/bin/:/usr/lib/jvm/java-8-openjdk-amd64/bin/"
 fi
 export PATH
 
