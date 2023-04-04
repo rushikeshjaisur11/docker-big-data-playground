@@ -2,7 +2,7 @@
 
 # Set some sensible defaults
 export CORE_CONF_fs_defaultFS=${CORE_CONF_fs_defaultFS:-hdfs://`hostname -f`:8020}
-
+export HBASE_DISABLE_HADOOP_CLASSPATH_LOOKUP=true
 function addProperty() {
   local path=$1
   local name=$2
@@ -38,6 +38,7 @@ configure /etc/hadoop/httpfs-site.xml httpfs HTTPFS_CONF
 configure /etc/hadoop/kms-site.xml kms KMS_CONF
 configure /etc/hadoop/mapred-site.xml mapred MAPRED_CONF
 configure /opt/hive/conf/hive-site.xml hive HIVE_SITE_CONF
+configure /etc/hbase/hbase-site.xml hbase HBASE_CONF
 
 if [ "$MULTIHOMED_NETWORK" = "1" ]; then
     echo "Configuring for multihomed network"
