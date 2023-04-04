@@ -16,10 +16,6 @@ To deploy an example HDFS cluster, run:
   docker-compose up
 ```
 
-Run example wordcount job:
-```
-  make wordcount
-```
 
 Or deploy in swarm:
 ```
