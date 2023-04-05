@@ -20,6 +20,8 @@ x-airflow-common:
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
+    # AIRFLOW_CONN_METASTORE_DEFAULT: 'hive-metastore://hive-metastore:9083?authMechanism=NOSASL'
+    AIRFLOW_CONN_HIVE_CLI_DEFAULT: 'hive-cli://airflow:airflow@hive-server:10000/default'
     # yamllint disable rule:line-length
     # Use simple http server on scheduler for health checks
     # See https://airflow.apache.org/docs/apache-airflow/stable/administration-and-deployment/logging-monitoring/check-health.html#scheduler-health-check-server
@@ -40,6 +42,10 @@ x-airflow-common:
       condition: service_healthy
     postgres:
       condition: service_healthy
+  env_file:
+    - ./hadoop/hadoop.env
+  networks:
+    - default
 
 services:
   namenode:
@@ -55,6 +61,8 @@ services:
       - CLUSTER_NAME=test
     env_file:
       - ./hadoop/hadoop.env
+    networks:
+      - default
 
   datanode:
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
@@ -68,6 +76,8 @@ services:
       - ./hadoop/hadoop.env
     ports:
       - 9864:9864
+    networks:
+      - default
   datanode2:
     image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
     container_name: datanode2
@@ -80,6 +90,8 @@ services:
       - ./hadoop/hadoop.env
     ports:
       - 9866:9864
+    networks:
+      - default
   edgenode:
     build:
       context: ./edgenode
@@ -91,7 +103,8 @@ services:
       - ./hadoop/hadoop.env
     environment:
       - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64/
-
+    networks:
+      - default
   resourcemanager:
     image: bde2020/hadoop-resourcemanager:2.0.0-hadoop3.2.1-java8
     container_name: resourcemanager
@@ -100,7 +113,8 @@ services:
       SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode:9864"
     env_file:
       - ./hadoop/hadoop.env
-
+    networks:
+      - default
   nodemanager1:
     image: bde2020/hadoop-nodemanager:2.0.0-hadoop3.2.1-java8
     container_name: nodemanager
@@ -109,7 +123,8 @@ services:
       SERVICE_PRECONDITION: "namenode:9000 namenode:9870 datanode:9864 resourcemanager:8088"
     env_file:
       - ./hadoop/hadoop.env
-
+    networks:
+      - default
   historyserver:
     image: bde2020/hadoop-historyserver:2.0.0-hadoop3.2.1-java8
     container_name: historyserver
@@ -120,6 +135,8 @@ services:
       - hadoop_historyserver:/hadoop/yarn/timeline
     env_file:
       - ./hadoop/hadoop.env
+    networks:
+      - default
   redis:
     image: redis:latest
     expose:
@@ -129,13 +146,16 @@ services:
       interval: 5s
       timeout: 30s
       retries: 50
-
+    networks:
+      - default
   mysql:
     image: mysql:latest
     environment:
       - MYSQL_ROOT_PASSWORD=root
     volumes:
       - mysql-volume:/var/lib/mysql
+    networks:
+      - default
   postgres:
     # image: postgres:latest
     build:
@@ -153,6 +173,8 @@ services:
       test: [ "CMD", "pg_isready", "-U", "airflow" ]
       interval: 5s
       retries: 5
+    networks:
+      - default
   # hue:
   #   image: bde2020/hdfs-filebrowser:3.11
   #   ports:
@@ -169,6 +191,8 @@ services:
       - ./hadoop/hadoop.env
     volumes:
       - ./spark/conf:/spark/conf/
+    networks:
+      - default
   spark-worker-a:
     image: bde2020/spark-worker:3.2.1-hadoop3.2
     depends_on:
@@ -187,6 +211,8 @@ services:
       - ./hadoop/hadoop.env
     volumes:
       - ./spark/conf:/spark/conf/
+    networks:
+      - default
   hive-server:
     build:
       context: ./hive
@@ -199,6 +225,8 @@ services:
       SERVICE_PRECONDITION: "hive-metastore:9083"
     ports:
       - "10000:10000"
+    networks:
+      - default
   hive-metastore:
     build:
       context: hive
@@ -212,6 +240,8 @@ services:
       - "9083:9083"
     depends_on:
       - postgres
+    networks:
+      - default
   # zeppelin:
   #   build:
   #     context: ./zeppelin
@@ -236,6 +266,8 @@ services:
       ZOO_SERVERS: server.1=0.0.0.0:2888:3888
     ports:
       - 2181:2181
+    networks:
+      - default
 
   airflow-webserver:
     <<: *airflow-common
@@ -441,3 +473,8 @@ volumes:
   hadoop_historyserver:
   postgres-db-volume:
   mysql-volume:
+
+
+networks:
+  default:
+    name: big-network

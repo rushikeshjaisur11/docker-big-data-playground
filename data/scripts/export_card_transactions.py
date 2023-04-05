@@ -11,4 +11,4 @@ df = spark.read.csv('hdfs://namenode:9000/project_input_data/input_data/card_tra
                     header=False, schema=schema)
 df = df.dropDuplicates(subset=['card_id', 'transaction_dt'])
 df.write.mode("append").format("hive").saveAsTable(
-    "bigdataproject.stg_card_transactions")
+    "bigdataproject.card_transactions")

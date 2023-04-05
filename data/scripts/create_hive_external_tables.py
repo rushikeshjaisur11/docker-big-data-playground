@@ -6,6 +6,7 @@ spark = (SparkSession.builder.master("spark://spark-master:7077")
          .enableHiveSupport()
          .getOrCreate())
 spark.sql("SET HIVE.ENFORCE.BUCKETING=TRUE;")
+spark.sql("create database if not exists bigdataproject")
 spark.sql("""
           create external table if not exists bigdataproject.member_score
           (
@@ -34,7 +35,7 @@ spark.sql("""create external table if not exists bigdataproject.member_details
         """)
 
 spark.sql("""
-          create table if not exists member_score_bucketed
+          create table if not exists bigdataproject.member_score_bucketed
             (
             member_id string,
             score float
@@ -42,7 +43,7 @@ spark.sql("""
             CLUSTERED BY (member_id) into 8 buckets
           """)
 spark.sql("""
-          create table if not exists member_details_bucketed
+          create table if not exists bigdataproject.member_details_bucketed
             (
             card_id bigint,
             member_id bigint,
@@ -56,7 +57,7 @@ spark.sql("""
           """)
 
 spark.sql("""
-          create external table if not exists card_transactions (
+          create external table if not exists bigdataproject.card_transactions (
             card_id bigint,
             member_id bigint,
             amount float,

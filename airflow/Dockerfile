@@ -2,8 +2,10 @@ FROM apache/airflow:2.5.2
 
 USER root
 RUN apt-get update \
+    && apt-get install -y default-jdk \
     && apt-get install -y --no-install-recommends \
     build-essential libopenmpi-dev \
+    && apt-get install wget \  
     && apt-get install libsasl2-dev \
     && apt-get autoremove -yqq --purge \
     && apt-get clean \
